@@ -1,6 +1,6 @@
 {
   "name": "@aicupa/plugin-task-line",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Task timeline strip for Todolist",
   "main": "./service",
   "view": "./view",
