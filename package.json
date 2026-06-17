@@ -1,9 +1,14 @@
 {
-  "name": "@aicupa/plugin-template",
+  "name": "@aicupa/plugin-task-line",
   "version": "1.0.0",
-  "description": "aicupa plugin template",
+  "description": "Task timeline strip for Todolist",
   "main": "./service",
   "view": "./view",
+  "pluginContributes": {
+    "views": {
+      "topfix": true
+    }
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
     "access": "public"

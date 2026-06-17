@@ -4,11 +4,157 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <title>Task Line</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: auto;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 12px;
+    }
+
+    #root {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      padding: 2px 14px;
+      border-bottom: 1px solid rgba(128, 128, 128, 0.06);
+      min-height: 26px;
+      box-sizing: border-box;
+    }
+
+    .list {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      overflow-x: auto;
+      flex-grow: 1;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(128,128,128,0.3) transparent;
+    }
+
+    .list::-webkit-scrollbar {
+      height: 4px;
+      background: transparent;
+    }
+
+    .list::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .list::-webkit-scrollbar-thumb {
+      background: rgba(128,128,128,0.3);
+      border-radius: 2px;
+    }
+
+    .item {
+      padding: 1px 6px;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+
+    .arrow {
+      font-size: 8px;
+      opacity: 0.25;
+    }
+
+    .level-secondary {
+      opacity: 0.45;
+    }
+
+    .level-success {
+      color: #52c41a;
+    }
+
+    .level-warning {
+      color: #faad14;
+    }
+
+    .level-danger {
+      color: #ff4d4f;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 
 <body>
+  <div id="root" class="hidden">
+    <div class="list" id="list"></div>
+  </div>
 
+  <script>
+    const levelOrder = { danger: 4, warning: 3, success: 2, default: 1, secondary: 0 }
+
+    function collectFocused(tree) {
+      const result = []
+      const traverse = (nodes) => {
+        for (const node of nodes) {
+          if (node?.todo && node.todo.focus && !node.todo.done) {
+            result.push(node.todo)
+          }
+          if (node?.children?.length) traverse(node.children)
+        }
+      }
+      traverse(Array.isArray(tree) ? tree : [])
+      result.sort((a, b) => (levelOrder[b.level] || 0) - (levelOrder[a.level] || 0))
+      return result
+    }
+
+    function escapeHtml(text) {
+      const d = document.createElement('div')
+      d.textContent = text
+      return d.innerHTML
+    }
+
+    function getLevelClass(level) {
+      if (level === 'secondary') return 'level-secondary'
+      if (level === 'success') return 'level-success'
+      if (level === 'warning') return 'level-warning'
+      if (level === 'danger') return 'level-danger'
+      return ''
+    }
+
+    function render(items) {
+      const root = document.getElementById('root')
+      const list = document.getElementById('list')
+
+      if (!items.length) {
+        root.classList.add('hidden')
+        return
+      }
+
+      root.classList.remove('hidden')
+      let html = ''
+      for (let i = 0; i < items.length; i++) {
+        if (i > 0) html += '<span class="arrow">→</span>'
+        html += '<span class="item ' + getLevelClass(items[i].level) + '">' +
+          escapeHtml(items[i].content) + '</span>'
+      }
+      list.innerHTML = html
+    }
+
+    window.addEventListener('message', (event) => {
+      const msg = event.data
+      if (msg?.type === 'plugin-init') {
+        if (msg.theme) {
+          document.body.style.color = msg.theme.color
+          document.body.style.backgroundColor = 'transparent'
+        }
+        window.parent.postMessage({ type: 'plugin-request-tree' }, '*')
+        return
+      }
+      if (msg?.type === 'plugin-tree-update') {
+        render(collectFocused(msg.tree || []))
+      }
+    })
+  </script>
 </body>
 
 </html>
